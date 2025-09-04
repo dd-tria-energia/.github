@@ -1,0 +1,12 @@
+name: "🤖 Tarefas Administrativas (chore)"
+description: "Issues sobre automações, dependências de desenvolvimento, etc."
+title: "chore: "
+labels: ["chore"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descrição"
+      description: "Descreva a tarefa administrativa ou de configuração do repositório. Inclui mudanças em .gitignore, GitHub Actions, etc."
+    validations:
+      required: true

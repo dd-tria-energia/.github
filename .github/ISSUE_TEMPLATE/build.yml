@@ -1,0 +1,12 @@
+name: "🌳 Dependências (build)"
+description: "Inclusão, atualização ou remoção de dependências do projeto."
+title: "build: "
+labels: ["build"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descrição"
+      description: "Descreva a mudança nas dependências do projeto. Qual dependência será adicionada, atualizada ou removida e por quê?"
+    validations:
+      required: true

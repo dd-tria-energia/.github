@@ -1,0 +1,23 @@
+name: "🚀 Nova Funcionalidade (feat)"
+description: "Crie uma issue para uma nova funcionalidade ou comportamento."
+title: "feat: "
+labels: ["feat"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por abrir uma issue! Por favor, preencha o título acima e os detalhes abaixo.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "Qual é a motivação para esta funcionalidade?"
+      description: "Descreva o problema que esta funcionalidade resolve ou o valor que ela agrega. Por que essa alteração é necessária?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Contexto Adicional"
+      description: "Forneça qualquer outra informação relevante, como notas técnicas, referências, ou screenshots."

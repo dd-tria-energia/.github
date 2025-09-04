@@ -1,0 +1,12 @@
+name: "🧪 Testes (test)"
+description: "Adição, correção ou alteração de testes automatizados."
+title: "test: "
+labels: ["test"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descrição"
+      description: "Descreva a necessidade relacionada a testes. Quais cenários precisam de novos testes ou quais testes existentes precisam de correção?"
+    validations:
+      required: true

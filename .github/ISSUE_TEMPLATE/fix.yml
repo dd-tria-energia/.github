@@ -1,0 +1,43 @@
+name: "🩹 Correção de Bug (fix)"
+description: "Relate um bug para ajudar a melhorar o projeto."
+title: "fix: "
+labels: ["fix"]
+body:
+  - type: markdown
+    attributes:
+      value: "Por favor, forneça o máximo de detalhes possível para nos ajudar a resolver o bug rapidamente."
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: "Descrição do Bug"
+      description: "Uma descrição clara e concisa do que é o bug. É um erro de execução, um comportamento inesperado, ou uma vulnerabilidade?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: "Passos para Reproduzir"
+      description: "Como podemos reproduzir o comportamento?"
+      placeholder: |
+        1. Vá para '...'
+        2. Clique em '....'
+        3. Role para baixo até '....'
+        4. Veja o erro
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: "Comportamento Esperado"
+      description: "Uma descrição clara e concisa do que você esperava que acontecesse."
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Contexto Adicional (Opcional)"
+      description: "Forneça screenshots, logs, ou qualquer outra informação que possa ajudar."

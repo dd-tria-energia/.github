@@ -1,0 +1,12 @@
+name: "🛠️ Refatoração (refactor)"
+description: "Sugira uma refatoração ou reestruturação de código."
+title: "refactor: "
+labels: ["refactor"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descrição"
+      description: "Descreva a refatoração proposta. Qual parte do código será reestruturada e por quê? Aponte os benefícios esperados (ex: legibilidade, manutenibilidade)."
+    validations:
+      required: true

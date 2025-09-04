@@ -1,0 +1,12 @@
+name: "📚 Documentação (docs)"
+description: "Sugira uma melhoria ou adição na documentação."
+title: "docs: "
+labels: ["docs"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descrição"
+      description: "Descreva a mudança necessária na documentação. Qual parte será afetada ou qual nova documentação será criada?"
+    validations:
+      required: true

@@ -1,0 +1,12 @@
+name: "⚡ Melhoria de Performance (perf)"
+description: "Sugira uma melhoria de performance."
+title: "perf: "
+labels: ["perf"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descrição"
+      description: "Descreva a melhoria de performance proposta. Onde está o gargalo e qual é a otimização sugerida?"
+    validations:
+      required: true

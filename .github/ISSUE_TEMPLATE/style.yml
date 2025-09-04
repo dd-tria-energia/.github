@@ -1,0 +1,12 @@
+name: "📐 Estilo de Código (style)"
+description: "Relate uma issue sobre formatação e estilo do código."
+title: "style: "
+labels: ["style"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descrição"
+      description: "Descreva a mudança de estilo de código necessária. Aponte os arquivos ou trechos que precisam de formatação/lint."
+    validations:
+      required: true
