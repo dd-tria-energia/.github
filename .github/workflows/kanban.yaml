@@ -1,0 +1,224 @@
+name: Orquestrador do Kanban
+
+on:
+  issues:
+    types: [opened, labeled, assigned, closed]
+  pull_request:
+    types: [opened, reopened, closed, ready_for_review]
+  schedule:
+    - cron: "0 9 * * 1-5" # Todo dia útil às 9h
+  workflow_dispatch:
+    inputs:
+      days-threshold:
+        description: "Número mínimo de dias para arquivar cards concluídos"
+        required: false
+        default: "3"
+        type: string
+
+env:
+  project_id: 7
+  BACKLOG_COLUMN: "Backlog"
+  TODO_COLUMN: "Todo"
+  IN_PROGRESS_COLUMN: "In Progress"
+  IN_REVIEW_COLUMN: "In Review"
+  TESTING_COLUMN: "Testing"
+  PENDING_RELEASE_COLUMN: "Pending Release"
+  DEPLOYED_COLUMN: "Deployed"
+
+jobs:
+  add-to-backlog:
+    name: "0 - Adicionar Issue ao Backlog"
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issues' && 
+      github.event.action == 'opened'
+    steps:
+      - name: "Adicionar Issue ao Backlog"
+        uses: dd-tria-energia/actions/acts/gh/projects/add-to-backlog@v1.1.1
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          organization: ${{ github.repository_owner }}
+          project-id: ${{ env.project_id }}
+          issue-number: ${{ github.event.issue.number }}
+          issue-node-id: ${{ github.event.issue.node_id }}
+          backlog-column: ${{ env.BACKLOG_COLUMN }}
+
+  backlog-to-todo:
+    name: "1 - Mover Backlog → Todo"
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issues' && 
+      github.event.action == 'labeled' && 
+      github.event.label.name == 'ready-to-do' &&
+      !contains(github.event.issue.labels.*.name, 'in progress')
+    steps:
+      - name: "Mover para Todo"
+        uses: dd-tria-energia/actions/acts/gh/projects/backlog-to-todo@v1.1.1
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          organization: ${{ github.repository_owner }}
+          project-id: ${{ env.project_id }}
+          issue-number: ${{ github.event.issue.number }}
+          issue-node-id: ${{ github.event.issue.node_id }}
+          todo-column: ${{ env.TODO_COLUMN }}
+
+  backlog-to-progress:
+    name: "2a - Mover Backlog → In Progress (Direto)"
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issues' && 
+      github.event.action == 'assigned' &&
+      !contains(github.event.issue.labels.*.name, 'in progress') &&
+      !contains(github.event.issue.labels.*.name, 'ready-to-do') &&
+      contains(github.event.issue.labels.*.name, 'backlog')
+    steps:
+      - name: "Mover para In Progress (direto do Backlog)"
+        uses: dd-tria-energia/actions/acts/gh/projects/backlog-to-progress@v1.1.1
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          organization: ${{ github.repository_owner }}
+          project-id: ${{ env.project_id }}
+          issue-number: ${{ github.event.issue.number }}
+          issue-title: ${{ github.event.issue.title }}
+          issue-node-id: ${{ github.event.issue.node_id }}
+          assignee: ${{ github.event.assignee.login }}
+          in-progress-column: ${{ env.IN_PROGRESS_COLUMN }}
+
+  todo-to-progress:
+    name: "2b - Mover Todo → In Progress"
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issues' && 
+      github.event.action == 'assigned' &&
+      !contains(github.event.issue.labels.*.name, 'in progress') &&
+      contains(github.event.issue.labels.*.name, 'ready-to-do')
+    steps:
+      - name: "Mover para In Progress"
+        uses: dd-tria-energia/actions/acts/gh/projects/todo-to-progress@v1.1.1
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          organization: ${{ github.repository_owner }}
+          project-id: ${{ env.project_id }}
+          issue-number: ${{ github.event.issue.number }}
+          issue-title: ${{ github.event.issue.title }}
+          issue-node-id: ${{ github.event.issue.node_id }}
+          assignee: ${{ github.event.assignee.login }}
+          in-progress-column: ${{ env.IN_PROGRESS_COLUMN }}
+
+  progress-to-review:
+    name: "3 - Mover In Progress → In Review"
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'opened' || github.event.action == 'reopened') &&
+      github.event.pull_request.base.ref == 'dev'
+    steps:
+      - name: "Move para In Review"
+        uses: dd-tria-energia/actions/acts/gh/projects/progress-to-review@v1.1.1
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          organization: ${{ github.repository_owner }}
+          project-id: ${{ env.project_id }}
+          pr-number: ${{ github.event.pull_request.number }}
+          # ✅ NOVOS INPUTS OBRIGATÓRIOS ADICIONADOS
+          pr-base-branch: ${{ github.event.pull_request.base.ref }}
+          pr-head-branch: ${{ github.event.pull_request.head.ref }}
+          review-column: ${{ env.IN_REVIEW_COLUMN }}
+
+  review-to-testing:
+    name: "4 - Mover In Review → Testing"
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'dev'
+    steps:
+      - name: "Move para Testing"
+        uses: dd-tria-energia/actions/acts/gh/projects/review-to-testing@v1.1.1
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          organization: ${{ github.repository_owner }}
+          project-id: ${{ env.project_id }}
+          pr-number: ${{ github.event.pull_request.number }}
+          # ✅ NOVOS INPUTS OBRIGATÓRIOS ADICIONADOS
+          pr-base-branch: ${{ github.event.pull_request.base.ref }}
+          pr-head-branch: ${{ github.event.pull_request.head.ref }}
+          pr-merged: "true"
+          testing-column: ${{ env.TESTING_COLUMN }}
+
+  testing-to-pending:
+    name: "5 - Mover Testing → Pending Release"
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'opened' || github.event.action == 'reopened') &&
+      github.event.pull_request.base.ref == 'main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history for commit analysis
+      - name: "Move para Pending Release"
+        uses: dd-tria-energia/actions/acts/gh/projects/testing-to-pending@v1.1.1
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          organization: ${{ github.repository_owner }}
+          project-id: ${{ env.project_id }}
+          pr-number: ${{ github.event.pull_request.number }}
+          # ✅ NOVOS INPUTS OBRIGATÓRIOS ADICIONADOS
+          pr-base-branch: ${{ github.event.pull_request.base.ref }}
+          pr-head-branch: ${{ github.event.pull_request.head.ref }}
+          pr-base-sha: ${{ github.event.pull_request.base.sha }}
+          pr-head-sha: ${{ github.event.pull_request.head.sha }}
+          pending-column: ${{ env.PENDING_RELEASE_COLUMN }}
+
+  pending-to-deployed:
+    name: "6 - Mover Pending Release → Deployed"
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history for commit analysis
+      - name: "Move para Deployed"
+        uses: dd-tria-energia/actions/acts/gh/projects/pending-to-deployed@v1.1.1
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          organization: ${{ github.repository_owner }}
+          project-id: ${{ env.project_id }}
+          pr-number: ${{ github.event.pull_request.number }}
+          pr-node-id: ${{ github.event.pull_request.node_id }}
+          pr-base-branch: ${{ github.event.pull_request.base.ref }}
+          pr-head-branch: ${{ github.event.pull_request.head.ref }}
+          pr-merged: "true"
+          pr-base-sha: ${{ github.event.pull_request.base.sha }}
+          pr-head-sha: ${{ github.event.pull_request.head.sha }}
+          deployed-column: ${{ env.DEPLOYED_COLUMN }}
+
+  # Limpeza semanal de cards concluídos
+  archive-cleanup:
+    name: "Limpeza de Cards Concluídos"
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: "Executa a Action de Limpeza"
+        uses: dd-tria-energia/actions/acts/gh/projects/archive-cleanup@v1.1.1
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          project-id: ${{ env.project_id }}
+          organization: ${{ github.repository_owner }}
+          days-threshold: ${{ github.event.inputs.days-threshold || '3' }}
+          target-columns: ${{ format('{0},{1},{2},{3},{4},{5},{6}', env.BACKLOG_COLUMN, env.TODO_COLUMN, env.IN_PROGRESS_COLUMN, env.IN_REVIEW_COLUMN, env.TESTING_COLUMN, env.PENDING_RELEASE_COLUMN, env.DEPLOYED_COLUMN) }}
+      - name: "Notificação Discord de limpeza do Projects"
+        uses: dd-tria-energia/actions/acts/utils/send-discord-notification@v1.1.1
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          message: ${{ format('Limpeza de cards concluídos realizada com sucesso no projeto {0}.', env.project_id) }}
